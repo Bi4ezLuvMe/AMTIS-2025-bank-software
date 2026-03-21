@@ -26,7 +26,7 @@ namespace BankingCompetition.Services
             this.ValidateData(competitorId, gitSha, sessionType, baseUrl);
         }
 
-        public async Task InitializeSessionAsync()
+        public async Task<SessionInfo> InitializeSessionAsync()
         {
             PostData data = new PostData(this.competitorId, this.sessionType, this.gitSha);
 
@@ -45,6 +45,8 @@ namespace BankingCompetition.Services
             SessionInfo session = JsonSerializer.Deserialize<SessionInfo>(responseBody);
 
             this.SessionId = session.sessionId;
+
+            return session;
         }
 
         private void ValidateData(string competitorId, string sessionType, string gitSha, string baseUrl)

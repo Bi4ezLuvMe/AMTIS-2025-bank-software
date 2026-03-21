@@ -8,7 +8,12 @@ namespace Project.Models
 {
     public class TransactionResult
     {
-        public string transaction_id { get; set; }
-        public string status { get; set; }
+        public TransactionResult(string transactionId,string status)
+        {
+            this.TransactionId = transactionId;
+            this.Status = status;   
+        }
+        public string TransactionId { get; set; }
+        public string Status { get; set; }
     }
 }

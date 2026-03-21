@@ -10,6 +10,6 @@ namespace Project.Models
     public class TransactionBatch
     {
         public string transactionsBatchId { get; set; }
-        public Transaction[]? transactions { get; set; }
+        public List<Transaction> transactions { get; set; }
     }
 }

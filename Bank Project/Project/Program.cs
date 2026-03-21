@@ -1,7 +1,6 @@
 ﻿using BankingCompetition.Services;
 using Project.Models;
 using Project.Models.SessionConstraints;
-using System.Text.Json;
 
 class Program
 {
@@ -9,10 +8,25 @@ class Program
     {
         SessionService session = new SessionService();
 
-        await session.InitializeSessionAsync();
+        SessionInfo sessionInfo = await session.InitializeSessionAsync();
 
-        TransactionService transactionService = new TransactionService(session.SessionId);
+        TransactionService transactionService = new TransactionService(sessionInfo);
 
-        await transactionService.GetTransactionBatchesAsync();
+        while (true)
+        {
+            TransactionBatch batch = await transactionService.GetTransactionBatchesAsync();
+
+            if (batch==null||batch.transactions == null || batch.transactions.Count == 0)
+            {
+                Console.WriteLine("All Transactions are processed!");
+                break;
+            }
+
+            List<TransactionResult> processedTransactions = await transactionService.ProcessTransactions(batch.transactions);
+
+            bool sendBatchResults = await transactionService.SendBatchResultsAsync(processedTransactions);
+        }
+        ;
+
     }
 }
