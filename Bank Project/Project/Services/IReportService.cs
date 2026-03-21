@@ -7,8 +7,8 @@ namespace BankingCompetition.Services
 {
     public interface IReportService
     {
-        Task<List<ReportConfig>> GetReportConfigurationAsync(string sessionId, string competitorId);
+        Task<List<ReportConfig>> GetReportConfigurationAsync();
         List<Report> GenerateReports(List<ReportConfig> configs);
-        Task<bool> SendReportsAsync(string sessionId, string competitorId, List<Report> reports);
+        Task<bool> SendReportsAsync(List<Report> reports);
     }
 }

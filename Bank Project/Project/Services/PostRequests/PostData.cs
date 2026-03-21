@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -10,15 +11,20 @@ namespace Project.Services.PostRequests
 {
     public class PostData
     {
-        public PostData(string competitorId, string sessionType, string gitSha)
-        {
-            this.competitorId = competitorId;
-            this.sessionType = sessionType;
-            this.gitSha = gitSha;
-        }
+        [JsonPropertyName("competitorId")]
+        public string CompetitorId { get; set; }
 
-        public string competitorId { get; set; }
-        public string sessionType { get; set; }
-        public string gitSha { get; set; }
+        [JsonPropertyName("sessionType")]
+        public string SessionType { get; set; }
+
+        [JsonPropertyName("gitSha")]
+        public string GitSha { get; set; }
+
+        public PostData(string id, string type, string sha)
+        {
+            CompetitorId = id;
+            SessionType = type;
+            GitSha = sha;
+        }
     }
 }

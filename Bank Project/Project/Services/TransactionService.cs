@@ -57,7 +57,7 @@ namespace BankingCompetition.Services
             return transactionBatches;
         }
 
-        public async Task<List<TransactionResult>> ProcessTransactions(List<Transaction> transactions)
+        public async Task<(List<TransactionResult>,List<Transaction>)> ProcessTransactions(List<Transaction> transactions)
         {
             decimal dailyClientSpendingLimit = SessionInfo.spendingLimits.dailyClientLimit;
             decimal weeklyClientSpendingLimit = SessionInfo.spendingLimits.weeklyClientLimit;
@@ -69,6 +69,7 @@ namespace BankingCompetition.Services
             decimal weeklyPremiumCardLimit = SessionInfo.spendingLimits.cardLimits.premium.weeklyLimit;
 
             List<TransactionResult> allTransactions = new List<TransactionResult>();
+            List<Transaction> allTransactions2 = new List<Transaction>();
             List<Transaction> allApprovedTransactions = new List<Transaction>();
 
             foreach (Transaction currentTransaction in transactions)
@@ -163,7 +164,7 @@ namespace BankingCompetition.Services
                 allTransactions.Add(new TransactionResult(currentTransaction.transaction_id, status));
             }
 
-            return allTransactions;
+            return (allTransactions,allTransactions2);
         }
 
         public async Task<bool> SendBatchResultsAsync(List<TransactionResult> transactions)
