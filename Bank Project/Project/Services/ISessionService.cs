@@ -4,7 +4,7 @@ namespace BankingCompetition.Services
 {
     public interface ISessionService
     {
-        Task<bool> InitializeSessionAsync();
+        Task InitializeSessionAsync();
         string SessionId { get; }
     }
 }

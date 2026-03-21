@@ -1,54 +1,70 @@
-﻿using System.Net.Http;
+﻿using Project.Models.SessionConstraints;
+using Project.Services.PostRequests;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace BankingCompetition.Services
 {
     public class SessionService : ISessionService
     {
-        private readonly HttpClient _client;
-        private readonly string _baseUrl;
-        private readonly string _competitorId;
-        private readonly string _gitSha;
-        private readonly string _sessionType;
+        private readonly HttpClient client = new HttpClient();
+        private readonly string baseUrl = Project.Common.Constants.baseUrl;
+        private readonly string competitorId = Project.Common.Constants.competitorId;
+        private readonly string gitSha = Project.Common.Constants.gitSha;
+        private readonly string sessionType = Project.Common.Constants.sessionType;
+        private readonly HashSet<string> allowedSessions = new HashSet<string> {
+            "test",
+            "sanity",
+            "stress",
+            "survival"
+        };
 
         public string SessionId { get; private set; }
 
-        public SessionService(HttpClient client, string baseUrl, string competitorId, string gitSha, string sessionType)
+        public SessionService()
         {
-            _client = client;
-            _baseUrl = baseUrl;
-            _competitorId = competitorId;
-            _gitSha = gitSha;
-            _sessionType = sessionType;
+            this.ValidateData(competitorId, gitSha, sessionType, baseUrl);
         }
 
-        public async Task<bool> InitializeSessionAsync()
+        public async Task InitializeSessionAsync()
         {
-            var payload = new
-            {
-                competitorId = _competitorId,
-                sessionType = _sessionType,
-                gitSha = _gitSha
-            };
+            PostData data = new PostData(this.competitorId, this.sessionType, this.gitSha);
 
-            var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            string json = JsonSerializer.Serialize(data);
+            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _client.PostAsync(_baseUrl + "sessions", content);
+            HttpResponseMessage response = await client.PostAsync(baseUrl + "sessions", content);
 
             if (!response.IsSuccessStatusCode)
-                return false;
+            {
+                throw new Exception("Cound not initialize session!" + response.StatusCode);
+            }
 
-            var responseBody = await response.Content.ReadAsStringAsync();
+            string responseBody = await response.Content.ReadAsStringAsync();
 
-            using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
+            SessionInfo session = JsonSerializer.Deserialize<SessionInfo>(responseBody);
 
-            SessionId = root.GetProperty("sessionId").GetString();
+            this.SessionId = session.sessionId;
+        }
 
-            return true;
+        private void ValidateData(string competitorId, string sessionType, string gitSha, string baseUrl)
+        {
+            if (competitorId == null || competitorId == String.Empty)
+            {
+                throw new InvalidDataException("Invalid competitorId!");
+            }
+            if (allowedSessions.Contains(sessionType))
+            {
+                throw new InvalidDataException("Invalid session type!");
+            }
+            if (gitSha == null || gitSha == String.Empty)
+            {
+                throw new InvalidDataException("Invalid gitSha!");
+            }
+            if (baseUrl == null || baseUrl == String.Empty)
+            {
+                throw new InvalidDataException("Invalid base url!");
+            }
         }
     }
 }

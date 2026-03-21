@@ -1,6 +1,6 @@
 ﻿using BankingCompetition.Models;
-using BankingCompetition.Utils;
 using Project.Models;
+using Project.Models.SessionConstraints;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -12,43 +12,40 @@ namespace BankingCompetition.Services
 {
     public class TransactionService
     {
-        private readonly HttpClient _client;
+        private readonly HttpClient client = new HttpClient();
 
-        private Dictionary<string, List<Transaction>> _transactionsByCard = new();
-        private Dictionary<string, List<Transaction>> _transactionsByUser = new();
+        private Dictionary<string, List<Transaction>> transactionsByCard = new();
+        private Dictionary<string, List<Transaction>> transactionsByUser = new();
+        
 
+        private readonly string baseUrl = Project.Common.Constants.baseUrl;
+        private readonly string competitorId = Project.Common.Constants.competitorId;
+       
+        public string SessionId { get;private set; }
 
-        private decimal StandardCardDailyLimit;
-        private decimal StandardCardWeeklyLimit;
-        private decimal PremiumCardDailyLimit;
-        private decimal PremiumCardWeeklyLimit;
-        private decimal UserDailyLimit;
-        private decimal UserWeeklyLimit;
-        private int MaxTransactionsPer10Seconds;
-        private decimal BankFeePercent;
-
-        public TransactionService(
-            HttpClient client
-            ,decimal StandardCardDailyLimit
-            ,decimal StandardCardWeeklyLimit
-            ,decimal PremiumCardDailyLimit
-            ,decimal PremiumCardWeeklyLimit
-            ,decimal UserDailyLimit
-            ,decimal UserWeeklyLimit
-            ,int MaxTransactionsPer10Seconds
-            ,decimal BankFeePercent)
+        public TransactionService(string sessionId)
         {
-            _client = client;
-            this.StandardCardDailyLimit = StandardCardDailyLimit;
-            this.StandardCardWeeklyLimit = StandardCardWeeklyLimit;
-            this.PremiumCardDailyLimit = PremiumCardDailyLimit;
-            this.PremiumCardWeeklyLimit = PremiumCardWeeklyLimit;
-            this.UserDailyLimit = UserDailyLimit;
-            this.UserWeeklyLimit = UserWeeklyLimit;
-            this.MaxTransactionsPer10Seconds = MaxTransactionsPer10Seconds;
-            this.BankFeePercent = BankFeePercent;
+            this.SessionId = sessionId;
         }
+        public async Task<TransactionBatch> GetTransactionBatchesAsync()
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, baseUrl + "transaction-batches");
+            request.Headers.Add("Session-Id", this.SessionId);
+            request.Headers.Add("Competitor-Id", this.competitorId);
 
+            HttpResponseMessage response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception("There was an error getting the transaction batches!" + response.StatusCode);
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            TransactionBatch transactionBatches = JsonSerializer.Deserialize<TransactionBatch>(responseContent);
+
+            return transactionBatches;
+        }
         public List<TransactionResult> ProcessTransactions(List<Transaction> transactions)
         {
             var results = new List<TransactionResult>();
@@ -57,9 +54,9 @@ namespace BankingCompetition.Services
             {
                 if(currentTransaction.type == "authorization")
                 {
-                    if (_transactionsByCard.ContainsKey(currentTransaction.card_id) == false)
+                    if (transactionsByCard.ContainsKey(currentTransaction.card_id) == false)
                     {
-                        _transactionsByCard.Add(currentTransaction.card_id, new List<Transaction>());
+                        transactionsByCard.Add(currentTransaction.card_id, new List<Transaction>());
                     }
 
                 }
@@ -79,7 +76,7 @@ namespace BankingCompetition.Services
             request.Headers.Add("Results-Hash", resultsHash);
             request.Content = content;
 
-            var response = await _client.SendAsync(request);
+            var response = await client.SendAsync(request);
             return response.IsSuccessStatusCode;
         }
     }

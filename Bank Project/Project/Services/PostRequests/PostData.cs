@@ -10,13 +10,8 @@ namespace Project.Services.PostRequests
 {
     public class PostData
     {
-        private readonly HashSet<string> allowedSessions = new HashSet<string>{ "test", "sanity" , "stress", "survival" };
         public PostData(string competitorId, string sessionType, string gitSha)
         {
-            if (allowedSessions.Contains(competitorId))
-            {
-                throw new ArgumentException("Invalid session type!");
-            }
             this.competitorId = competitorId;
             this.sessionType = sessionType;
             this.gitSha = gitSha;
